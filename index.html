@@ -237,15 +237,25 @@
             img.src = TEMPLATE_URL;
         }
         
-        function downloadCertificate() {
-            if (certificateDataURL) {
-                const link = document.createElement('a');
-                const name = document.getElementById('name').value;
-                link.download = `certificado_${name.replace(/\s+/g, '_')}.png`;
-                link.href = certificateDataURL;
-                link.click();
-            }
+     function downloadCertificate() {
+    if (certificateDataURL) {
+        const name = document.getElementById('name').value;
+        const url = certificateDataURL;
+
+        // Tenta forçar download em desktop
+        const link = document.createElement('a');
+        link.download = `certificado_${name.replace(/\s+/g, '_')}.png`;
+        link.href = url;
+
+        if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            // Em mobile: abre em nova aba
+            window.open(url, '_blank');
+        } else {
+            // Em desktop: baixa direto
+            link.click();
         }
+    }
+}
         
         // Se vier do Google Forms com parâmetros na URL
         window.onload = function() {
