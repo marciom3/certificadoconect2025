@@ -137,7 +137,12 @@
             <button onclick="downloadCertificate()" class="download-btn">
                 📥 Baixar Certificado
             </button>
+            <button onclick="previewCertificate()" class="download-btn">
+    👀 Visualizar Certificado
+</button>
+
         </div>
+        
     </div>
     
     <script>
@@ -256,7 +261,12 @@
         }
     }
 }
-        
+        function previewCertificate() {
+    if (certificateDataURL) {
+        window.open(certificateDataURL, '_blank');
+    }
+}
+
         // Se vier do Google Forms com parâmetros na URL
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
