@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Certificados</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        #certificateSection {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        canvas {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            max-width: 100%;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .success-msg {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Gerador de Certificados</h1>
+        
+        <form id="certificateForm">
+            <div class="form-group">
+                <label for="name">Nome Completo:</label>
+                <input type="text" id="name" required placeholder="Digite seu nome completo">
+            </div>
+            
+            <div class="form-group">
+                <label for="cpf">CPF:</label>
+                <input type="text" id="cpf" placeholder="000.000.000-00" maxlength="14">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" placeholder="seu@email.com">
+            </div>
+            
+            <button type="submit">Gerar Certificado</button>
+        </form>
+        
+        <div id="certificateSection">
+            <div class="success-msg">
+                <h2>✅ Certificado Gerado com Sucesso!</h2>
+            </div>
+            
+            <canvas id="certificateCanvas"></canvas>
+            
+            <button onclick="downloadCertificate()" class="download-btn">
+                📥 Baixar Certificado
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // CONFIGURAÇÃO DO CERTIFICADO
+        // Cole a URL da sua imagem de template aqui
+        const TEMPLATE_URL = 'https://via.placeholder.com/800x600/ffffff/000000?text=CERTIFICADO+TEMPLATE';
+        
+        // Configurações de posição e estilo do nome
+        const config = {
+            xPos: 400,  // Posição horizontal
+            yPos: 300,  // Posição vertical
+            fontSize: 48,
+            fontColor: '#000000',
+            fontFamily: 'Arial',
+            fontWeight: 'bold'
+        };
+        
+        let certificateDataURL = null;
+        
+        // Formatação do CPF
+        document.getElementById('cpf').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            } else if (value.length > 6) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
+            } else if (value.length > 3) {
+                value = value.replace(/(\d{3})(\d{3})/, '$1.$2');
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Gerar certificado
+        document.getElementById('certificateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const cpf = document.getElementById('cpf').value;
+            const email = document.getElementById('email').value;
+            
+            // Salvar dados (você pode enviar para um servidor aqui)
+            console.log('Dados:', { name, cpf, email });
+            
+            // Gerar certificado
+            generateCertificate(name);
+        });
+        
+        function generateCertificate(name) {
+            const canvas = document.getElementById('certificateCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = function() {
+                // Configurar canvas
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Desenhar template
+                ctx.drawImage(img, 0, 0);
+                
+                // Configurar texto
+                ctx.font = `${config.fontWeight} ${config.fontSize}px ${config.fontFamily}`;
+                ctx.fillStyle = config.fontColor;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Adicionar sombra
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+                ctx.shadowBlur = 2;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                
+                // Desenhar nome
+                ctx.fillText(name.toUpperCase(), config.xPos, config.yPos);
+                
+                // Salvar data URL
+                certificateDataURL = canvas.toDataURL('image/png');
+                
+                // Mostrar seção do certificado
+                document.getElementById('certificateSection').style.display = 'block';
+                
+                // Scroll suave
+                document.getElementById('certificateSection').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            };
+            
+            img.onerror = function() {
+                alert('Erro ao carregar o template. Verifique a URL da imagem.');
+            };
+            
+            img.src = TEMPLATE_URL;
+        }
+        
+        function downloadCertificate() {
+            if (certificateDataURL) {
+                const link = document.createElement('a');
+                const name = document.getElementById('name').value;
+                link.download = `certificado_${name.replace(/\s+/g, '_')}.png`;
+                link.href = certificateDataURL;
+                link.click();
+            }
+        }
+        
+        // Se vier do Google Forms com parâmetros na URL
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name');
+            const cpf = urlParams.get('cpf');
+            const email = urlParams.get('email');
+            
+            if (name) {
+                document.getElementById('name').value = name;
+                document.getElementById('cpf').value = cpf || '';
+                document.getElementById('email').value = email || '';
+                
+                // Auto-gerar certificado se vier com nome
+                generateCertificate(name);
+            }
+        };
+    </script>
+</body>
+</html>
